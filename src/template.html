@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>ANGRY TEACHER</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+html,body{margin:0;height:100%;background:#16302b;overflow:hidden;touch-action:none;overscroll-behavior:none}
+body{display:flex;align-items:center;justify-content:center;font-family:"Comic Sans MS","Chalkboard SE","Marker Felt","Trebuchet MS",cursive,sans-serif}
+#stage{position:relative;background:#16302b;overflow:hidden;box-shadow:0 0 40px #000a}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#hud{position:absolute;top:.6em;right:.6em;display:none;gap:.5em}
+.ib{font-size:1.5em;width:2em;height:2em;border-radius:50%;border:.12em solid #3b2a14;background:linear-gradient(#ffe27a,#ffb627);box-shadow:0 .15em 0 #8a5a12;cursor:pointer;padding:0;line-height:1}
+.ib:active{transform:translateY(.12em);box-shadow:0 .03em 0 #8a5a12}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#fff;gap:.7em}
+.screen.show{display:flex}
+#sTitle{background:radial-gradient(ellipse at center,#0000 30%,#0008 100%)}
+#sLevels,#sHow,#sPause,#sResult{background:#10251fe6;backdrop-filter:blur(3px)}
+.logo{font-size:5.2em;line-height:.95;margin:0;color:#ffe14d;-webkit-text-stroke:.06em #5a1b0a;paint-order:stroke fill;text-shadow:0 .09em 0 #c4381c,0 .18em 0 #5a1b0a,0 .3em .4em #0008;transform:rotate(-3deg);letter-spacing:.02em}
+.logo small{display:block;font-size:.55em;color:#fff;-webkit-text-stroke:.07em #c4381c;transform:rotate(2deg)}
+h2{margin:0;font-size:2.6em;color:#ffe14d;text-shadow:0 .08em 0 #8a2b12}
+.btn{font:inherit;font-size:1.6em;font-weight:900;color:#3b1b00;padding:.35em 1.3em;border-radius:1em;border:.1em solid #3b2a14;background:linear-gradient(#ffe27a,#ffab1f);box-shadow:0 .2em 0 #8a5a12,0 .3em .5em #0006;cursor:pointer;min-width:7em}
+.btn:hover{filter:brightness(1.08)}
+.btn:active{transform:translateY(.15em);box-shadow:0 .05em 0 #8a5a12}
+.btn.green{background:linear-gradient(#9cf07a,#36b83a);box-shadow:0 .2em 0 #1c6b22,0 .3em .5em #0006}
+.btn.red{background:linear-gradient(#ff9a8a,#e5432b);box-shadow:0 .2em 0 #8f220f,0 .3em .5em #0006;color:#fff}
+.btn.small{font-size:1.15em}
+.row{display:flex;gap:.8em;flex-wrap:wrap;justify-content:center}
+#grid{display:grid;grid-template-columns:repeat(5,5.6em);gap:.7em}
+.lv{font:inherit;font-weight:900;font-size:1.5em;height:3.1em;border-radius:.6em;border:.09em solid #3b2a14;background:linear-gradient(#fff2b0,#ffc83d);color:#3b1b00;box-shadow:0 .14em 0 #8a5a12;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
+.lv i{font-style:normal;font-size:.6em;color:#b07a00;letter-spacing:.05em}
+.lv i b{color:#f5a300}
+.lv.lock{background:#556;color:#99a;box-shadow:0 .14em 0 #334;cursor:not-allowed}
+.lv:not(.lock):active{transform:translateY(.1em)}
+.how{max-width:30em;font-size:1.15em;line-height:1.45;text-align:left;background:#0003;border:.1em dashed #fff8;border-radius:1em;padding:1em 1.3em}
+.how b{color:#ffe14d}
+.stars{font-size:4.5em;line-height:1;letter-spacing:.05em}
+.stars span{display:inline-block;color:#4a5a55;text-shadow:0 .05em 0 #0006}
+.stars span.on{color:#ffd21f;text-shadow:0 .05em 0 #a66a00,0 0 .4em #ffd21f;animation:pop .6s cubic-bezier(.3,1.8,.5,1) both}
+@keyframes pop{0%{transform:scale(0) rotate(-90deg)}100%{transform:scale(1) rotate(0)}}
+.sum{font-size:1.25em;line-height:1.5;min-width:16em;background:#0004;border-radius:.8em;padding:.6em 1em}
+.sum div{display:flex;justify-content:space-between;gap:2em}
+.sum .tot{font-size:1.3em;color:#ffe14d;border-top:.08em solid #fff6;margin-top:.2em}
+#rot{display:none;position:fixed;left:0;right:0;top:0;background:#ffe14d;color:#3b1b00;text-align:center;padding:.4em;font-weight:900;font-size:14px;z-index:9}
+@media (orientation:portrait){#rot{display:block}}
+</style>
+</head>
+<body>
+<div id="rot">📱 Rotate your phone sideways for the best view!</div>
+<div id="stage">
+  <canvas id="cv"></canvas>
+  <div id="hud"><button class="ib" id="bSnd" title="Sound">🔊</button><button class="ib" id="bRestart" title="Retry">↻</button><button class="ib" id="bPause" title="Pause">⏸</button></div>
+
+  <div class="screen show" id="sTitle">
+    <h1 class="logo">ANGRY<br>TEACHER<small>Class is in session!</small></h1>
+    <div class="row"><button class="btn green" id="bPlay">▶ PLAY</button><button class="btn" id="bLevels">LEVELS</button></div>
+    <button class="btn small" id="bHow">HOW TO PLAY</button>
+  </div>
+
+  <div class="screen" id="sHow">
+    <h2>HOW TO PLAY</h2>
+    <div class="how">
+      <b>Aim:</b> drag back the slingshot, let go to fire. The dotted line shows your path.<br>
+      <b>Special:</b> <b>tap / click / SPACE</b> while a supply is flying to use its power!<br>
+      📕 <b>Textbook</b> – heavy. Tap to SLAM down.<br>
+      ✏️ <b>Pencil</b> – fast. Tap to PIERCE light stuff.<br>
+      🧽 <b>Eraser</b> – bouncy. Tap to home in on a slacker.<br>
+      🖍️ <b>Chalk</b> – tap to SPLIT into 3.<br>
+      📖 <b>Dictionary</b> – huge. Tap for an EARTHQUAKE.<br>
+      Make every student <b>smart</b> to win. Spare supplies = bonus points!
+    </div>
+    <button class="btn" id="bHowBack">OK!</button>
+  </div>
+
+  <div class="screen" id="sLevels">
+    <h2>PICK A CLASS</h2>
+    <div id="grid"></div>
+    <button class="btn small" id="bLevBack">◀ BACK</button>
+  </div>
+
+  <div class="screen" id="sPause">
+    <h2>PAUSED</h2>
+    <button class="btn green" id="pResume">▶ RESUME</button>
+    <div class="row"><button class="btn small" id="pRetry">↻ RETRY</button><button class="btn small" id="pLevels">LEVELS</button></div>
+    <div class="row"><button class="btn small" id="pSfx">SOUND: ON</button><button class="btn small" id="pVoice">VOICE: ON</button></div>
+  </div>
+
+  <div class="screen" id="sResult">
+    <h2 id="rTitle">CLASS SMARTENED!</h2>
+    <div class="stars" id="rStars"><span>★</span><span>★</span><span>★</span></div>
+    <div class="sum" id="rSum"></div>
+    <div class="row"><button class="btn" id="rRetry">↻ RETRY</button><button class="btn green" id="rNext">NEXT ▶</button><button class="btn small" id="rLevels">LEVELS</button></div>
+  </div>
+</div>
+<script>
+/*MATTER*/
+</script>
+<script>
+/*GAME*/
+</script>
+</body>
+</html>
